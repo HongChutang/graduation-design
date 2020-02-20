@@ -1,0 +1,141 @@
+{% extends '__base__.html' %}
+
+{% block title %}SQL 注入检测系统{% endblock %}
+
+{% block beforehead %}
+
+<script>
+function initVM(data) {
+    $('#div-comments').show();
+    var vm = new Vue({
+        el: '#div-comments',
+        data: {
+            records: data.records,
+            page: data.page
+        },
+        methods: {
+            previous: function () {
+                gotoPage(this.page.page_index - 1);
+            },
+            next: function () {
+                gotoPage(this.page.page_index + 1);
+            },
+            train: function () {
+                showConfirm('确认重新训练算法？', '确认重新训练后将更新现有检测算法模型！', function () {
+                    getApi('/api/train', {}, function (err, r) {
+                        if (err) {
+                            return showError(err);
+                        }
+                        location.reload();
+                    });
+                });
+            },
+            confirm_attack: function (record) {
+                showConfirm('确认判定此次检测结果为攻击事件？', '确认后将把此次记录加入攻击样本库！', function () {
+                    postApi('/api/confirm_attack/' + record.id + '', {}, function (err, r) {
+                        if (err) {
+                            return showError(err);
+                        }
+                        location.reload();
+                    });
+                });
+            },
+            ignore: function (record) {
+                showConfirm('确认判定此次检测结果为正常流量？', '确认后将把此次记录加入正常样本库！', function () {
+                    postApi('/api/ignore/' + record.id + '', {}, function (err, r) {
+                        if (err) {
+                            return showError(err);
+                        }
+                        location.reload();
+                    });
+                });
+            },
+            levelStyle: function (level) {
+                let levelColor = ['blue', 'yellow', 'orange', 'red'];
+                let style = 'border-radius:12px; padding:3px 10px;color: #eee;';
+                return style + 'background:' + levelColor[level - 1];
+            }
+        }
+    });
+}
+$(function() {
+    getApi('/api/records?page={{ page_index }}', function (err, results) {
+        if (err) {
+            return showError(err);
+        }
+        $('#div-loading').hide();
+        let levelMap = ['低危', '中危', '高危', '致命'];
+        results.records.map((item, index) => {
+            item.levelText = levelMap[item.level -1];
+            item.index = index + 1;
+        });
+        initVM(results);
+    });
+});
+</script>
+
+{% endblock %}
+
+{% block content %}
+    <div class="uk-width-1-1">
+        <div class="uk-alert uk-alert-danger uk-hidden"></div>
+    </div>
+
+    <div id="div-comments" class="uk-width-1-1" style="display:none">
+        <div><button v-on="click: train()" class="train-button">
+            重新训练算法</button></div>
+        <table class="uk-table uk-table-hover">
+            <thead>
+                <tr>
+                    <th class="uk-width-1-10">序号</th>
+                    <th class="uk-width-2-10">Payload</th>
+                    <th class="uk-width-1-10">攻击源IP</th>
+                    <th class="uk-width-1-10">方法</th>
+                    <th class="uk-width-2-10">时间</th>
+                    <th class="uk-width-2-10">危险等级</th>
+                    <th class="uk-width-1-10">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-repeat="record: records" >
+                    <td>
+                        <span v-text="record.index"></span>
+                    </td>
+                    <td>
+                        <span v-text="record.content"></span>
+                    </td>
+                    <td>
+                        <span v-text="record.src_ip"></span>
+                    </td>
+                    <td>
+                        <span v-text="record.method"></span>
+                    </td>
+                    <td>
+                        <span v-text="record.timestamp"></span>
+                    </td>
+                    <td>
+                        <span v-text="record.levelText" v-style="levelStyle(record.level)"></span>
+                    </td>
+                    <td>
+                        <a href="#0" v-on="click: confirm_attack(record)">确认</a>
+                        <br>
+                        <a href="#0" v-on="click: ignore(record)">忽略</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="uk-width-1-1 uk-text-center">
+            <ul class="uk-pagination">
+                <li v-if="! page.has_previous" class="uk-disabled"><span><i class="uk-icon-angle-double-left"></i></span></li>
+                <li v-if="page.has_previous"><a v-on="click: previous()" href="#0"><i class="uk-icon-angle-double-left"></i></a></li>
+                <li class="uk-active"><span v-text="page.page_index"></span></li>
+                <li v-if="! page.has_next" class="uk-disabled"><span><i class="uk-icon-angle-double-right"></i></span></li>
+                <li v-if="page.has_next"><a v-on="click: next()" href="#0"><i class="uk-icon-angle-double-right"></i></a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="div-loading" class="uk-width-1-1 uk-text-center">
+        <span><i class="uk-icon-spinner uk-icon-medium uk-icon-spin"></i> 正在加载...</span>
+    </div>
+{% endblock %}

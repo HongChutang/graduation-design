@@ -1,0 +1,48 @@
+/*
+ * custom css
+ */
+a:hover, a:active {
+    text-decoration: none;
+}
+
+.uk-navbar {
+    padding: 8px;
+    background-image: -webkit-linear-gradient(top,#70db83,#4a766e);
+    background-image: linear-gradient(to bottom,#70db83,#4a766e);
+}
+
+.uk-navbar-brand {
+    font-size: 20px;
+    color: #fff;
+    text-shadow: 0 1px 0 #333;
+    padding: 0 10px;
+}
+
+.uk-navbar-nav>li>a {
+    color: #fff;
+    text-shadow: 0 1px 0 #333;
+}
+
+.uk-navbar-nav>li:hover>a, .uk-navbar-nav>li>a:focus, .uk-navbar-nav>li.uk-open>a {
+    color: #fff
+}
+
+.uk-navbar-brand:hover, .uk-navbar-brand:focus {
+    color: #fff;
+}
+
+.train-button {
+    background: #4a766e;
+    border-radius:3px;
+    border:none;
+    padding:6px 16px;
+    color:#fff;
+    outline:none;
+}
+.train-button:hover {
+    background: #70db83;
+}
+.train-button:active {
+    background: #4a766e;
+}
+
